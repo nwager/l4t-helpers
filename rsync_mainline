@@ -1,0 +1,13 @@
+#!/bin/sh
+if [ $# -ne 1 ]; then
+	echo "Please provide AGX handle <user>@<address>"
+	exit 1
+fi
+set -e
+PWD=$(dirname "$(readlink -f "$0")")
+BASE=$(basename $PWD)
+RSYNC_DIR=linux_rsync
+ssh $1 "sudo rm -rf $RSYNC_DIR"
+ssh $1 "mkdir $RSYNC_DIR"
+rsync -azP --exclude="$BASE/.git" --exclude="$BASE/scripts" $PWD $1:~/$RSYNC_DIR
+rsync -azP $PWD/../clean_scripts/scripts $1:~/$RSYNC_DIR/$BASE

@@ -1,0 +1,13 @@
+#!/bin/sh
+#make ARCH=arm64 CROSS_COMPILE=${HOME}/l4t-gcc/bin/aarch64-buildroot-linux-gnu- $@
+PWD=$(dirname "$(readlink -f "$0")")
+export ARCH=arm64
+export CROSS_COMPILE=$HOME/l4t-gcc/bin/aarch64-buildroot-linux-gnu-
+#export O=$PWD/kernel_out
+#export INSTALL_MOD_PATH=$PWD/modules_out
+#export INSTALL_HDR_PATH=$PWD/headers_out
+make \
+	ARCH=$ARCH \
+	CROSS_COMPILE=$CROSS_COMPILE \
+	-j`nproc` \
+	$@

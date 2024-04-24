@@ -1,0 +1,57 @@
+#!/bin/bash
+
+set -e
+
+if [ $# -gt 1 ]; then
+	echo "USAGE: $0 [-x]"
+	exit 1
+fi
+
+ALREADY_EXTRACTED=0
+if [ $# -eq 1 ]; then
+	if [[ "$1" == "-x" ]]; then
+		ALREADY_EXTRACTED=1
+	else
+		echo "Unrecognized option '$1'"
+		exit 1
+	fi
+fi
+
+SCRIPTDIR=$(dirname "$(readlink -f "$0")")
+TOPDIR=$(realpath "$SCRIPTDIR/..")
+cd $TOPDIR
+
+USERNAME=ubuntu
+
+rootfs=$TOPDIR/Linux_for_Tegra/rootfs
+if [ $ALREADY_EXTRACTED -eq 0 ]; then
+	if [ ! -d Linux_for_Tegra ]; then
+		echo "Extracting BSP..."
+		tar xf $(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1)
+	fi
+
+	if [ ! -d $rootfs ] || [ ! "ls -A $rootfs" ]; then
+		echo "Extracting rootfs. This may take a while..."
+		mkdir $rootfs
+		sudo tar xpf $(ls | grep -iE "tegra_linux_sample-root-filesystem_.*_aarch64\.tbz2" | head -1) -C $rootfs
+		echo "Done extracting rootfs. Applying binaries..."
+	fi
+fi
+
+cd Linux_for_Tegra
+sudo ./apply_binaries.sh
+echo "Done applying binaries."
+./tools/l4t_flash_prerequisites.sh
+sudo tools/l4t_create_default_user.sh -u $USERNAME -p $USERNAME -n agx -a --accept-license
+# put files in rootfs
+userhome=$rootfs/home/$USERNAME
+sudo cp $SCRIPTDIR/grub-setup $userhome
+sudo cp $SCRIPTDIR/autosetup $userhome
+echo "%sudo ALL=(ALL) NOPASSWD: ALL" | sudo tee -a $rootfs/etc/sudoers
+cp -r $HOME/.ssh $userhome/
+if ! grep -q -F "$(cat $HOME/.ssh/id_ed25519.pub)" $userhome/.ssh/authorized_keys; then
+	cat $HOME/.ssh/id_ed25519.pub >> $userhome/.ssh/authorized_keys
+fi
+sudo cat /root/.ssh/id_ed25519.pub >> $userhome/.ssh/authorized_keys
+echo "resize > /dev/null" >> $userhome/.bashrc
+echo "Success!"

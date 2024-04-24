@@ -1,0 +1,29 @@
+#!/bin/bash
+PWD=$(dirname "$(readlink -f "$0")")
+cd $PWD
+set -e
+PRODUCT_NAME="NVIDIA Jetson AGX Orin Developer Kit"
+if [ "$(cat /sys/devices/virtual/dmi/id/product_name)" != "$PRODUCT_NAME" ]; then
+	echo "Please run this on $PRODUCT_NAME"
+	exit 1
+fi
+
+MAKE="sudo make -j`nproc`"
+
+# remake config for new system
+sudo rm -f .config
+$MAKE tegra_defconfig
+$MAKE scripts modules_install install
+# save for headers later
+cp Module.symvers ..
+# clean and install headers
+$MAKE mrproper
+KVER="$($MAKE kernelversion)+"
+HDR_OUT="/usr/src/linux-headers-$KVER"
+MAKE="$MAKE O=$HDR_OUT"
+$MAKE tegra_defconfig
+$MAKE modules_prepare
+sudo rm -f $HDR_OUT/source
+sudo mv $PWD/../Module.symvers $HDR_OUT
+
+echo "Installed linux kernel $KVER. Reboot now."

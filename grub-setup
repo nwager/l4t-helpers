@@ -1,0 +1,56 @@
+#!/bin/bash
+if [[ $EUID != 0 ]]; then
+    echo "Please run as root"
+    exit 1
+fi
+
+echo "As a reminder, you must use the Micro USB port when booting GRUB for serial I/O."
+
+set -e
+
+EFI_DEV=$(fdisk -l | grep EFI | tail -1 | cut -d " " -f1)
+KVER=$(uname -r)
+CMDLINE=$( \
+	grep -Eo "^[^#]\s*APPEND.*" /boot/extlinux/extlinux.conf |
+	tr ' ' '\n' |
+	grep -Ev "(^APPEND)|(cbootargs)|(^root=.+)|(r[wo]$)" |
+	tr '\n' ' ' |
+	xargs \
+)
+
+apt update && apt install -y grub-efi-arm64
+
+# mount EFI partition
+mkdir -p /boot/efi
+if [ ! -z "$(findmnt /boot/efi)" ]; then
+	echo "Remounting EFI partition..."
+	umount /boot/efi
+fi
+mount $EFI_DEV /boot/efi
+echo "EFI partition mounted to /boot/efi"
+
+grub-install
+cp /boot/Image /boot/vmlinuz-$KVER
+cp /boot/initrd /boot/initrd.img-$KVER
+
+# edit grub defaults
+sed -i -E "s@(GRUB_DEFAULT)=.*@\1=\"Advanced options for Ubuntu>Ubuntu, with Linux $KVER\"@" /etc/default/grub
+sed -i -E "s@(GRUB_CMDLINE_LINUX_DEFAULT)=.*@\1=\"${CMDLINE}\"@" /etc/default/grub
+sed -i -E "s@(GRUB_TIMEOUT_STYLE)=.*@\1=menu@" /etc/default/grub
+sed -i -E "s@(GRUB_TIMEOUT)=.*@\1=10@" /etc/default/grub
+sed -i -E "s@#(GRUB_TERMINAL=console)@\1@" /etc/default/grub
+echo "Changed /etc/default/grub"
+
+# Grub looks for "dtb" files in /boot, so having a "dtb" directory messes it up
+# Rename the "dtb" directory so grub uses only the default dtb
+if [ -d /boot/dtb ]; then
+	mv /boot/dtb /boot/dtbs
+fi
+
+#echo "pcie_tegra194" | sudo tee -a /etc/initramfs-tools/modules
+#sudo update-initramfs -k all -c
+
+# update
+update-grub
+
+echo "GRUB updated. Reboot now."
