@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# export helper scripts to the target top level Tegra project
+
+if [ $# -ne 1 ]; then
+	echo "Please specify one target directory."
+	exit 1
+fi
+
+git archive --format=tar --prefix=l4t-helpers/ HEAD | (cd $1 && tar xf -)
+
