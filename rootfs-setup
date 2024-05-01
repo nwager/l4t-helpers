@@ -23,20 +23,21 @@ cd $TOPDIR
 
 USERNAME=ubuntu
 
-sudo apt install -yqq lbzip2 qemu-user-static
+echo "Installing dependencies..."
+sudo apt install -yqq lbzip2 qemu-user-static pv
 
 rootfs=$TOPDIR/Linux_for_Tegra/rootfs
 if [ $ALREADY_EXTRACTED -eq 0 ]; then
 	if [ ! -d Linux_for_Tegra ]; then
 		echo "Extracting BSP..."
-		tar xf $(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1)
+		pv $(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1) | tar -xj
 	fi
 
 	# if rootfs/ doesn't exist or only has one file (README.txt) then extract
 	if [ ! -d $rootfs ] || [ "$(ls -A $rootfs | wc -l)" -le 1 ]; then
 		echo "Extracting rootfs. This may take a while..."
 		mkdir -p $rootfs
-		sudo tar xpf $(ls | grep -iE "tegra_linux_sample-root-filesystem_.*_aarch64\.tbz2" | head -1) -C $rootfs
+		pv $(ls | grep -iE "tegra_linux_sample-root-filesystem_.*_aarch64\.tbz2" | head -1) | sudo tar -xpj -C $rootfs
 		echo "Done extracting rootfs. Applying binaries..."
 	fi
 fi
