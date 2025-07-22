@@ -46,7 +46,7 @@ cd Linux_for_Tegra
 sudo ./apply_binaries.sh
 echo "Done applying binaries."
 ./tools/l4t_flash_prerequisites.sh
-sudo tools/l4t_create_default_user.sh -u $USERNAME -p $USERNAME -n agx-jetpack -a --accept-license
+sudo tools/l4t_create_default_user.sh -u $USERNAME -p $USERNAME -n jetpack -a --accept-license
 # put files in rootfs
 userhome=$rootfs/home/$USERNAME
 sudo cp $SCRIPTDIR/grub-setup $userhome
