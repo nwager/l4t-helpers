@@ -43,7 +43,11 @@ if [ $ALREADY_EXTRACTED -eq 0 ]; then
 fi
 
 cd Linux_for_Tegra
-sudo ./apply_binaries.sh
+# Use OpenRM if available
+if ./apply_binaries.sh --help | grep -q -- --openrm; then
+	OPENRM_FLAG="--openrm"
+fi
+sudo ./apply_binaries.sh $OPENRM_FLAG
 echo "Done applying binaries."
 ./tools/l4t_flash_prerequisites.sh
 sudo tools/l4t_create_default_user.sh -u $USERNAME -p $USERNAME -n jetpack -a --accept-license
