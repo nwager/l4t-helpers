@@ -45,6 +45,7 @@ fi
 cd Linux_for_Tegra
 # Use OpenRM if available
 if ./apply_binaries.sh --help | grep -q -- --openrm; then
+	echo "Using OpenRM binaries"
 	OPENRM_FLAG="--openrm"
 fi
 sudo ./apply_binaries.sh $OPENRM_FLAG
