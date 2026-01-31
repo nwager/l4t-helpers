@@ -29,13 +29,23 @@ sudo apt install -yqq lbzip2 qemu-user-static pv
 rootfs=$TOPDIR/Linux_for_Tegra/rootfs
 if [ $ALREADY_EXTRACTED -eq 0 ]; then
 	if [ ! -d Linux_for_Tegra ]; then
-		echo "Extracting BSP..."
+		local bsp_file="$(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1)"
+		if [ ! -f "$bsp_file" ]; then
+			echo "ERROR: Failed to find BSP archive"
+			exit 1
+		fi
+		echo "Extracting BSP from '$bsp_file' ..."
 		pv $(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1) | tar -xj
 	fi
 
 	# if rootfs/ doesn't exist or only has one file (README.txt) then extract
 	if [ ! -d $rootfs ] || [ "$(ls -A $rootfs | wc -l)" -le 1 ]; then
-		echo "Extracting rootfs. This may take a while..."
+		rootfs_file="$(ls | grep -iE "tegra_linux_sample-root-filesystem_.*_aarch64\.tbz2" | head -1)"
+		if [ ! -f "$rootfs_file" ]; then
+			echo "ERROR: Failed to find rootfs archive"
+			exit 1
+		fi
+		echo "Extracting rootfs from '$rootfs_file'. This may take a while..."
 		mkdir -p $rootfs
 		pv $(ls | grep -iE "tegra_linux_sample-root-filesystem_.*_aarch64\.tbz2" | head -1) | sudo tar -xpj -C $rootfs
 		echo "Done extracting rootfs. Applying binaries..."
