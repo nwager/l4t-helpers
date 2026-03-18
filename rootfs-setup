@@ -29,7 +29,7 @@ sudo apt install -yqq lbzip2 qemu-user-static pv
 rootfs=$TOPDIR/Linux_for_Tegra/rootfs
 if [ $ALREADY_EXTRACTED -eq 0 ]; then
 	if [ ! -d Linux_for_Tegra ]; then
-		local bsp_file="$(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1)"
+		bsp_file="$(ls | grep -iE "jetson_linux_.*_aarch64\.tbz2" | head -1)"
 		if [ ! -f "$bsp_file" ]; then
 			echo "ERROR: Failed to find BSP archive"
 			exit 1
